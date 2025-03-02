@@ -3,17 +3,16 @@ using System.Threading;
 using System.Threading.Tasks;
 
 using DurableTask.TypedProxy;
-
-using Microsoft.Azure.WebJobs;
-using Microsoft.Azure.WebJobs.Extensions.DurableTask;
 using Microsoft.Extensions.Logging;
+using Microsoft.Azure.Functions.Worker;
+using Microsoft.Azure.WebJobs.Extensions.DurableTask;
 
 namespace KeyVault.Acmebot.Functions;
 
 public class RenewCertificates
 {
-    [FunctionName($"{nameof(RenewCertificates)}_{nameof(Orchestrator)}")]
-    public async Task Orchestrator([OrchestrationTrigger] IDurableOrchestrationContext context, ILogger log)
+    [Microsoft.Azure.Functions.Worker.Function($"{nameof(RenewCertificates)}_{nameof(Orchestrator)}")]
+    public async Task Orchestrator([Microsoft.Azure.Functions.Worker.OrchestrationTrigger] IDurableOrchestrationContext context, ILogger log)
     {
         var activity = context.CreateActivityProxy<ISharedActivity>();
 
@@ -56,8 +55,8 @@ public class RenewCertificates
         }
     }
 
-    [FunctionName($"{nameof(RenewCertificates)}_{nameof(Timer)}")]
-    public async Task Timer([TimerTrigger("0 0 0 * * *")] TimerInfo timer, [DurableClient] IDurableClient starter, ILogger log)
+    [Microsoft.Azure.Functions.Worker.Function($"{nameof(RenewCertificates)}_{nameof(Timer)}")]
+    public async Task Timer([Microsoft.Azure.Functions.Worker.TimerTrigger("0 0 0 * * *")] TimerInfo timer, [Microsoft.Azure.Functions.Worker.DurableClient] IDurableClient starter, ILogger log)
     {
         // Function input comes from the request content.
         var instanceId = await starter.StartNewAsync($"{nameof(RenewCertificates)}_{nameof(Orchestrator)}");

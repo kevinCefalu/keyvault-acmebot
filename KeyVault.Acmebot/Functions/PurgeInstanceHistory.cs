@@ -2,16 +2,15 @@
 using System.Threading.Tasks;
 
 using DurableTask.Core;
-
-using Microsoft.Azure.WebJobs;
+using Microsoft.Azure.Functions.Worker;
 using Microsoft.Azure.WebJobs.Extensions.DurableTask;
 
 namespace KeyVault.Acmebot.Functions;
 
 public class PurgeInstanceHistory
 {
-    [FunctionName($"{nameof(PurgeInstanceHistory)}_{nameof(Timer)}")]
-    public Task Timer([TimerTrigger("0 0 0 1 * *")] TimerInfo timer, [DurableClient] IDurableClient starter)
+    [Microsoft.Azure.Functions.Worker.Function($"{nameof(PurgeInstanceHistory)}_{nameof(Timer)}")]
+    public Task Timer([Microsoft.Azure.Functions.Worker.TimerTrigger("0 0 0 1 * *")] TimerInfo timer, [Microsoft.Azure.Functions.Worker.DurableClient] IDurableClient starter)
     {
         return starter.PurgeInstanceHistoryAsync(
             DateTime.MinValue,

@@ -8,10 +8,9 @@ using KeyVault.Acmebot.Internal;
 
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Azure.WebJobs;
-using Microsoft.Azure.WebJobs.Extensions.DurableTask;
-using Microsoft.Azure.WebJobs.Extensions.Http;
 using Microsoft.Extensions.Logging;
+using Microsoft.Azure.Functions.Worker;
+using Microsoft.Azure.WebJobs.Extensions.DurableTask;
 
 namespace KeyVault.Acmebot.Functions;
 
@@ -22,8 +21,8 @@ public class RenewCertificate : HttpFunctionBase
     {
     }
 
-    [FunctionName($"{nameof(RenewCertificate)}_{nameof(Orchestrator)}")]
-    public async Task Orchestrator([OrchestrationTrigger] IDurableOrchestrationContext context)
+    [Microsoft.Azure.Functions.Worker.Function($"{nameof(RenewCertificate)}_{nameof(Orchestrator)}")]
+    public async Task Orchestrator([Microsoft.Azure.Functions.Worker.OrchestrationTrigger] IDurableOrchestrationContext context)
     {
         var certificateName = context.GetInput<string>();
 
@@ -35,11 +34,11 @@ public class RenewCertificate : HttpFunctionBase
         await context.CallSubOrchestratorAsync(nameof(SharedOrchestrator.IssueCertificate), certificatePolicyItem);
     }
 
-    [FunctionName($"{nameof(RenewCertificate)}_{nameof(HttpStart)}")]
+    [Microsoft.Azure.Functions.Worker.Function($"{nameof(RenewCertificate)}_{nameof(HttpStart)}")]
     public async Task<IActionResult> HttpStart(
-        [HttpTrigger(AuthorizationLevel.Anonymous, "post", Route = "api/certificate/{certificateName}/renew")] HttpRequest req,
+        [Microsoft.Azure.Functions.Worker.HttpTrigger(AuthorizationLevel.Anonymous, "post", Route = "api/certificate/{certificateName}/renew")] HttpRequest req,
         string certificateName,
-        [DurableClient] IDurableClient starter,
+        [Microsoft.Azure.Functions.Worker.DurableClient] IDurableClient starter,
         ILogger log)
     {
         if (!User.Identity.IsAuthenticated)

@@ -10,10 +10,9 @@ using KeyVault.Acmebot.Models;
 
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Azure.WebJobs;
-using Microsoft.Azure.WebJobs.Extensions.DurableTask;
-using Microsoft.Azure.WebJobs.Extensions.Http;
 using Microsoft.Extensions.Logging;
+using Microsoft.Azure.Functions.Worker;
+using Microsoft.Azure.WebJobs.Extensions.DurableTask;
 
 namespace KeyVault.Acmebot.Functions;
 
@@ -24,18 +23,18 @@ public class GetDnsZones : HttpFunctionBase
     {
     }
 
-    [FunctionName($"{nameof(GetDnsZones)}_{nameof(Orchestrator)}")]
-    public Task<IReadOnlyList<DnsZoneGroup>> Orchestrator([OrchestrationTrigger] IDurableOrchestrationContext context)
+    [Function($"{nameof(GetDnsZones)}_{nameof(Orchestrator)}")]
+    public Task<IReadOnlyList<DnsZoneGroup>> Orchestrator([Microsoft.Azure.Functions.Worker.OrchestrationTrigger] IDurableOrchestrationContext context)
     {
         var activity = context.CreateActivityProxy<ISharedActivity>();
 
         return activity.GetAllDnsZones();
     }
 
-    [FunctionName($"{nameof(GetDnsZones)}_{nameof(HttpStart)}")]
+    [Function($"{nameof(GetDnsZones)}_{nameof(HttpStart)}")]
     public async Task<IActionResult> HttpStart(
         [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "api/dns-zones")] HttpRequest req,
-        [DurableClient] IDurableClient starter,
+        [Microsoft.Azure.Functions.Worker.DurableClient] IDurableClient starter,
         ILogger log)
     {
         if (!User.Identity.IsAuthenticated)

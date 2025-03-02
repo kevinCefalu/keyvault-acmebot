@@ -4,16 +4,15 @@ using System.Threading.Tasks;
 using DurableTask.TypedProxy;
 
 using KeyVault.Acmebot.Models;
-
-using Microsoft.Azure.WebJobs;
+using Microsoft.Azure.Functions.Worker;
 using Microsoft.Azure.WebJobs.Extensions.DurableTask;
 
 namespace KeyVault.Acmebot.Functions;
 
 public class SharedOrchestrator
 {
-    [FunctionName(nameof(IssueCertificate))]
-    public async Task IssueCertificate([OrchestrationTrigger] IDurableOrchestrationContext context)
+    [Microsoft.Azure.Functions.Worker.Function(nameof(IssueCertificate))]
+    public async Task IssueCertificate([Microsoft.Azure.Functions.Worker.OrchestrationTrigger] IDurableOrchestrationContext context)
     {
         var certificatePolicyItem = context.GetInput<CertificatePolicyItem>();
 

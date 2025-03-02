@@ -4,9 +4,8 @@ using Azure.WebJobs.Extensions.HttpApi;
 
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Azure.WebJobs;
+using Microsoft.Azure.Functions.Worker;
 using Microsoft.Azure.WebJobs.Extensions.DurableTask;
-using Microsoft.Azure.WebJobs.Extensions.Http;
 
 namespace KeyVault.Acmebot.Functions;
 
@@ -17,11 +16,11 @@ public class GetInstanceState : HttpFunctionBase
     {
     }
 
-    [FunctionName($"{nameof(GetInstanceState)}_{nameof(HttpStart)}")]
+    [Microsoft.Azure.Functions.Worker.Function($"{nameof(GetInstanceState)}_{nameof(HttpStart)}")]
     public async Task<IActionResult> HttpStart(
-        [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "api/state/{instanceId}")] HttpRequest req,
+        [Microsoft.Azure.Functions.Worker.HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "api/state/{instanceId}")] HttpRequest req,
         string instanceId,
-        [DurableClient] IDurableClient starter)
+        [Microsoft.Azure.Functions.Worker.DurableClient] IDurableClient starter)
     {
         if (!User.Identity.IsAuthenticated)
         {

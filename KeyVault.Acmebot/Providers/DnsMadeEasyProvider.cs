@@ -13,6 +13,8 @@ using KeyVault.Acmebot.Internal;
 using KeyVault.Acmebot.Options;
 
 using Newtonsoft.Json;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
 
 namespace KeyVault.Acmebot.Providers;
 
@@ -143,16 +145,16 @@ public class DnsMadeEasyProvider : IDnsProvider
 #pragma warning restore CA5350 // Do Not Use Weak Cryptographic Algorithms
             }
 
-            protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+            protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
             {
-                var currentTimeStr = DateTime.UtcNow.ToString("r", CultureInfo.InvariantCulture);
-                var hmac = ComputeHash(currentTimeStr);
+                var timestamp = DateTimeOffset.UtcNow.ToUnixTimeSeconds().ToString();
+                var hash = ComputeHash($"{ApiKey}:{timestamp}");
 
-                request.Headers.Add("x-dnsme-apikey", ApiKey);
-                request.Headers.Add("x-dnsme-requestdate", currentTimeStr);
-                request.Headers.Add("x-dnsme-hmac", hmac);
+                request.Headers.Add("x-dnsme-apiKey", ApiKey);
+                request.Headers.Add("x-dnsme-requestDate", timestamp);
+                request.Headers.Add("x-dnsme-hmac", hash);
 
-                return base.SendAsync(request, cancellationToken);
+                return await base.SendAsync(request, cancellationToken);
             }
 
             private string ComputeHash(string s)

@@ -2,9 +2,8 @@
 
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Azure.WebJobs;
-using Microsoft.Azure.WebJobs.Extensions.Http;
 using Microsoft.Extensions.Logging;
+using Microsoft.Azure.Functions.Worker;
 
 namespace KeyVault.Acmebot.Functions;
 
@@ -15,7 +14,7 @@ public class StaticPage : HttpFunctionBase
     {
     }
 
-    [FunctionName($"{nameof(StaticPage)}_{nameof(Serve)}")]
+    [Function($"{nameof(StaticPage)}_{nameof(Serve)}")]
     public IActionResult Serve(
         [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "{*path}")] HttpRequest req,
         ILogger log)

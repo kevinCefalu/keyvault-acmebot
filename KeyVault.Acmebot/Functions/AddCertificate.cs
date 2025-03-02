@@ -7,10 +7,11 @@ using KeyVault.Acmebot.Models;
 
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Azure.WebJobs;
-using Microsoft.Azure.WebJobs.Extensions.DurableTask;
-using Microsoft.Azure.WebJobs.Extensions.Http;
 using Microsoft.Extensions.Logging;
+using Microsoft.Azure.Functions.Worker;
+using Microsoft.Azure.WebJobs.Extensions.DurableTask;
+using Microsoft.Azure.Functions.Worker.Http;
+using System.Net;
 
 namespace KeyVault.Acmebot.Functions;
 
@@ -21,25 +22,33 @@ public class AddCertificate : HttpFunctionBase
     {
     }
 
-    [FunctionName($"{nameof(AddCertificate)}_{nameof(HttpStart)}")]
-    public async Task<IActionResult> HttpStart(
+    [Function($"{nameof(AddCertificate)}_{nameof(HttpStart)}")]
+    public async Task<HttpResponseData> HttpStart(
+        [Microsoft.Azure.Functions.Worker.DurableClient] IDurableClient starter, // Use the correct attribute for .NET Worker (Isolated Process)
         [HttpTrigger(AuthorizationLevel.Anonymous, "post", Route = "api/certificate")] CertificatePolicyItem certificatePolicyItem,
-        [DurableClient] IDurableClient starter,
-        ILogger log)
+        FunctionContext executionContext)
     {
+        var log = executionContext.GetLogger("AddCertificate");
+
         if (!User.Identity.IsAuthenticated)
         {
-            return Unauthorized();
+            var response = executionContext.GetHttpResponseData();
+            response.StatusCode = HttpStatusCode.Unauthorized;
+            return response;
         }
 
         if (!User.HasIssueCertificateRole())
         {
-            return Forbid();
+            var response = executionContext.GetHttpResponseData();
+            response.StatusCode = HttpStatusCode.Forbidden;
+            return response;
         }
 
         if (!TryValidateModel(certificatePolicyItem))
         {
-            return ValidationProblem(ModelState);
+            var response = executionContext.GetHttpResponseData();
+            response.StatusCode = HttpStatusCode.BadRequest;
+            return response;
         }
 
         if (string.IsNullOrEmpty(certificatePolicyItem.CertificateName))
@@ -52,6 +61,9 @@ public class AddCertificate : HttpFunctionBase
 
         log.LogInformation($"Started orchestration with ID = '{instanceId}'.");
 
-        return AcceptedAtFunction($"{nameof(GetInstanceState)}_{nameof(GetInstanceState.HttpStart)}", new { instanceId }, null);
+        var acceptedResponse = executionContext.GetHttpResponseData();
+        acceptedResponse.StatusCode = HttpStatusCode.Accepted;
+        acceptedResponse.Headers.Add("Location", $"{nameof(GetInstanceState)}_{nameof(GetInstanceState.HttpStart)}?instanceId={instanceId}");
+        return acceptedResponse;
     }
 }
